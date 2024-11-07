@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histogram: Log GDP per Capita Distribution</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .chart {
+            width: 400px;
+            height: 400px;
+            margin: 20px;
+            text-align: center;
+        }
+        .title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .description {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart" id="histogram">
+        <div class="title">Log GDP per Capita Distribution</div>
+        <div class="description">This histogram shows the distribution of Log GDP per Capita across countries.</div>
+    </div>
+
+    <script>
+        d3.csv("world-happiness-report.csv").then(data => {
+            const histogramSvg = d3.select("#histogram").append("svg").attr("width", 400).attr("height", 400);
+
+            const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+            const width = 400 - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+
+            const g = histogramSvg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Filter data for Log GDP per Capita and convert to numbers
+            const filteredData = data.filter(d => d["Log GDP per capita"] !== "").map(d => +d["Log GDP per capita"]);
+
+            const x = d3.scaleLinear()
+                .domain(d3.extent(filteredData))
+                .range([0, width]);
+
+            const histogram = d3.histogram()
+                .value(d => d)  // We directly use the filtered numeric data
+                .domain(x.domain())
+                .thresholds(x.ticks(20));
+
+            const bins = histogram(filteredData);
+
+            const y = d3.scaleLinear()
+                .domain([0, d3.max(bins, d => d.length)])
+                .range([height, 0]);
+
+            g.selectAll(".bar")
+                .data(bins)
+                .enter().append("rect")
+                .attr("x", d => x(d.x0) + 1)
+                .attr("y", d => y(d.length))
+                .attr("width", d => x(d.x1) - x(d.x0) - 1)
+                .attr("height", d => height - y(d.length))
+                .attr("fill", "#1f77b4");
+
+            g.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x));
+
+            g.append("g")
+                .call(d3.axisLeft(y));
+        }).catch(error => {
+            console.error("Error loading the CSV file:", error);
+        });
+    </script>
+</body>
+</html>

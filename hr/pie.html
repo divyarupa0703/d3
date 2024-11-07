@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pie Chart: Attrition Distribution</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .chart {
+            width: 400px;
+            height: 400px;
+            margin: 20px;
+            text-align: center;
+        }
+        .title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .description {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart" id="pie-chart">
+        <div class="title">Attrition Distribution</div>
+        <div class="description">This pie chart shows the proportion of employees who left the company ("Yes") vs. those who stayed ("No").</div>
+    </div>
+
+    <script>
+        d3.csv("hr\HR-Employee-Attrition.csv").then(data => {
+            const attritionCount = d3.rollup(data, v => v.length, d => d.Attrition);
+
+            const pieSvg = d3.select("#pie-chart").append("svg")
+                .attr("viewBox", 0 0 400 400)
+                .append("g")
+                .attr("transform", translate(200,200));
+
+            const pie = d3.pie().value(d => d[1]);
+            const data_ready = pie([...attritionCount.entries()]);
+            const arc = d3.arc().innerRadius(0).outerRadius(150);
+
+            pieSvg.selectAll("path")
+                .data(data_ready)
+                .enter().append("path")
+                .attr("d", arc)
+                .attr("fill", (d, i) => d3.schemeCategory10[i % 10]);
+
+            pieSvg.selectAll("text")
+                .data(data_ready)
+                .enter().append("text")
+                .text(d => d.data[0])
+                .attr("transform", d => translate(${arc.centroid(d)}))
+                .style("text-anchor", "middle")
+                .style("font-size", 15);
+        }).catch(error => {
+            console.error("Error loading the CSV file:", error);
+        });
+    </script>
+</body>
+</html>

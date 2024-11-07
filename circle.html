@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Happiness Report - Circle Packing</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>World Happiness Report - Circle Packing</h1>
+    <div id="circlePacking" class="chart"></div>
+
+    <script>
+        // Load the datasets
+        d3.csv('world-happiness-report.csv').then(function(data) {
+            const width = 600;
+            const height = 400;
+
+            const root = d3.hierarchy(d3.stratify().id(d => d['Country name']).parentId(d => d['Regional indicator'])(data))
+                .sum(d => +d['Life Ladder'])
+                .sort((a, b) => b.value - a.value);
+
+            d3.pack()
+                .size([width, height])
+                .padding(3)(root);
+
+            const svg = d3.select("#circlePacking").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            const node = svg.selectAll("g")
+                .data(root.descendants())
+                .enter().append("g")
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            node.append("circle")
+                .attr("r", d => d.r)
+                .attr("fill", "#69b3a2");
+
+            node.append("text")
+                .attr("text-anchor", "middle")
+                .text(d => d.data.id);
+        });
+    </script>
+</body>
+</html>
